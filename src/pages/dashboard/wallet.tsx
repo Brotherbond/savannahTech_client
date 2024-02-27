@@ -1,6 +1,6 @@
 import type { NextPage } from 'next'
 import Layout from '@/layouts/Dashboard'
-import { Container, Typography, Unstable_Grid2 as Grid } from '@mui/material'
+import { Container, Unstable_Grid2 as Grid } from '@mui/material'
 
 
 const Wallet: NextPage = () => {

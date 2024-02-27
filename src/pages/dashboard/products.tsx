@@ -21,7 +21,7 @@ import type { IndexFiltersProps, TabProps } from '@shopify/polaris';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { NextPage } from 'next'
 import Layout from '@/layouts/Dashboard'
-import { Container, Unstable_Grid2 as Grid, Typography } from '@mui/material'
+import { Typography } from '@mui/material'
 import useSWR, { mutate } from 'swr';
 import routes from '@/lib/routes';
 import { fetcher, patchRequest } from '@/lib/api';
