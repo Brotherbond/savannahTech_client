@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     TextField,
     IndexTable,
@@ -22,7 +21,7 @@ import Layout from '@/layouts/Dashboard'
 import { Container, Unstable_Grid2 as Grid, Typography } from '@mui/material'
 import useSWR from 'swr';
 import routes from '@/lib/routes';
-import { fetcher, sendRequest } from '@/lib/api';
+import { fetcher, patchRequest } from '@/lib/api';
 import Image from 'next/image';
 import useSWRMutation from 'swr/mutation';
 
@@ -33,13 +32,12 @@ interface Product {
     currency: string,
     commission: number,
     commissionType: number,
-    id: string,
+    _id: string,
     image: string,
 }
 
 const Calculator: NextPage = () => {
     const { data, error, isLoading } = useSWR(routes.api.products, fetcher)
-    const { trigger } = useSWRMutation(routes.api.products, sendRequest)
 
     const [products, setProducts] = useState<Product[]>([])
     useEffect(() => {
@@ -51,25 +49,12 @@ const Calculator: NextPage = () => {
         plural: 'products',
     };
 
-    const handleCommissionChange = (id: string) => {
-
-    }
-
-    const toggleCommissionType = (i: number) => {
-        setProducts((prev: Product[]) => {
-            const products = [...prev]
-            products[i].commissionType = (products[i].commissionType + 1) % 2
-            return products
-        })
-    }
-
-
     const { selectedResources, allResourcesSelected, handleSelectionChange } =
         useIndexResourceState(products as any);
 
     const rowMarkup = products.map(
         (
-            { id, image, name, currency, category, commission, commissionType, price },
+            { _id: id, image, name, currency, category, commission, commissionType, price },
             index,
         ) => (
             <IndexTable.Row
@@ -85,27 +70,7 @@ const Calculator: NextPage = () => {
                 <IndexTable.Cell>{category}</IndexTable.Cell>
                 <IndexTable.Cell>{currency}{price}</IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Typography sx={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
-                        {/* <span onClick={() => toggleCommissionType(index)}>
-                            {commissionType ?
-                                <Icon
-                                    source={ToggleOffIcon}
-                                    tone="base"
-                                />
-                                :
-                                <Icon
-                                    source={ToggleOnIcon}
-                                    tone="base"
-                                />
-                            }
-                        </span> */}
-                        <TextField
-                            label=""
-                            value={commission.toString()}
-                            onChange={() => handleCommissionChange(id)}
-                            autoComplete="off"
-                        />
-                    </Typography>
+                    <Commission {...{ commission, id, index }} />
                 </IndexTable.Cell>
             </IndexTable.Row>
         ),
@@ -237,5 +202,51 @@ const Calculator: NextPage = () => {
 
 }
 
+
+
+const Commission = ({ commission, id, index }: { commission: number, id: string, index: number }) => {
+    const { trigger } = useSWRMutation(`${routes.api.products}/${id}`, patchRequest)
+    const [value, setValue] = useState(commission.toString())
+    const handleCommissionChange = (value: string, id: string) => {
+        console.log(id)
+        setValue(value)
+        trigger({ commission: value, })
+    }
+
+    // const toggleCommissionType = (i: number) => {
+    //     setProducts((prev: Product[]) => {
+    //         const products = [...prev]
+    //         products[i].commissionType = (products[i].commissionType + 1) % 2
+    //         return products
+    //     })
+    // }
+
+
+
+    return <>
+        <Typography sx={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
+            {/* <span onClick={() => toggleCommissionType(index)}>
+                            {commissionType ?
+                                <Icon
+                                    source={ToggleOffIcon}
+                                    tone="base"
+                                />
+                                :
+                                <Icon
+                                    source={ToggleOnIcon}
+                                    tone="base"
+                                />
+                            }
+                        </span> */}
+            <TextField
+                label=""
+                value={value.toString()}
+                onChange={(e) => handleCommissionChange(e, id)}
+                autoComplete="off"
+            />
+        </Typography>
+
+    </>
+}
 
 export default Calculator;
