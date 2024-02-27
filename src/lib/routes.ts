@@ -10,7 +10,8 @@ const routes = {
   },
   dashboard: {
     overview: "/dashboard",
-    calculator: "/dashboard/calculator",
+    products: "/dashboard/products",
+    orders: "/dashboard/orders",
     referral: "/dashboard/referral",
     investment: "/dashboard/investment",
     wallet: "/dashboard/wallet",
@@ -24,6 +25,7 @@ const routes = {
       signup: `${api}/auth/signup`,
     },
     products: `${api}/products`,
+    orders: `${api}/orders`,
   },
 };
 

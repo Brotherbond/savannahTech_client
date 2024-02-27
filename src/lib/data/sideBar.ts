@@ -31,9 +31,14 @@ const sideBar: SideBarType[] = [
     icon: BarChartIcon,
   },
   {
-    label: "Calculator",
-    link: routes.dashboard.calculator,
+    label: "Products",
+    link: routes.dashboard.products,
     icon: WalletRoundedIcon,
+  },
+  {
+    label: "Orders",
+    link: routes.dashboard.orders,
+    icon: PaidSharpIcon,
   },
   {
     label: "Transactions",

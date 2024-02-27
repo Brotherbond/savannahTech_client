@@ -5,56 +5,43 @@ import {
     IndexFilters,
     useSetIndexFiltersMode,
     useIndexResourceState,
-    Text,
     useBreakpoints,
-    Icon,
 } from '@shopify/polaris';
-import {
-    ToggleOnIcon,
-    ToggleOffIcon
-} from '@shopify/polaris-icons';
-
 import type { IndexFiltersProps, TabProps } from '@shopify/polaris';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { NextPage } from 'next'
 import Layout from '@/layouts/Dashboard'
-import { Container, Unstable_Grid2 as Grid, Typography } from '@mui/material'
 import useSWR from 'swr';
 import routes from '@/lib/routes';
-import { fetcher, patchRequest } from '@/lib/api';
+import { fetcher } from '@/lib/api';
 import Image from 'next/image';
-import useSWRMutation from 'swr/mutation';
+import { Product, sleep } from './products';
 
-interface Product {
-    price: number,
-    name: string,
-    category: string,
-    currency: string,
-    commission: number,
-    commissionType: number,
-    _id: string,
-    image: string,
-}
 
-const Calculator: NextPage = () => {
-    const { data, error, isLoading } = useSWR(routes.api.products, fetcher)
-
-    const [products, setProducts] = useState<Product[]>([])
+const Order: NextPage = () => {
+    const { data, error, isLoading } = useSWR(routes.api.orders, fetcher)
+    const [orders, setProducts] = useState<Product[]>([])
     useEffect(() => {
         (data as [])?.length && setProducts(data as [])
     }, [data])
 
     const resourceName = {
-        singular: 'product',
-        plural: 'products',
+        singular: 'order',
+        plural: 'orders',
     };
 
-    const { selectedResources, allResourcesSelected, handleSelectionChange } =
-        useIndexResourceState(products as any);
+    const resourceIDResolver = (orders: any) => {
+        return orders._id;
+    };
 
-    const rowMarkup = products.map(
+    const { selectedResources, allResourcesSelected, clearSelection, handleSelectionChange } =
+        useIndexResourceState(orders as any, {
+            resourceIDResolver,
+        });
+
+    const rowMarkup = useMemo(() => [...orders].slice(0, 10).map(
         (
-            { _id: id, image, name, currency, category, commission, commissionType, price },
+            { _id: id, image, name, currency, category, commission, price },
             index,
         ) => (
             <IndexTable.Row
@@ -69,26 +56,26 @@ const Calculator: NextPage = () => {
                 </IndexTable.Cell>
                 <IndexTable.Cell>{category}</IndexTable.Cell>
                 <IndexTable.Cell>{currency}{price}</IndexTable.Cell>
-                <IndexTable.Cell>
-                    <Commission {...{ commission, id, index }} />
-                </IndexTable.Cell>
+                <IndexTable.Cell>{commission}</IndexTable.Cell>
             </IndexTable.Row>
         ),
-    );
+    ), [orders, selectedResources]
+    )
 
     const sortOptions: IndexFiltersProps['sortOptions'] = [
         { label: 'Order', value: 'order asc', directionLabel: 'Ascending' },
         { label: 'Order', value: 'order desc', directionLabel: 'Descending' },
+        { label: 'Price', value: 'order asc', directionLabel: 'Ascending' },
+        { label: 'Price', value: 'order desc', directionLabel: 'Descending' },
         { label: 'Customer', value: 'customer asc', directionLabel: 'A-Z' },
         { label: 'Customer', value: 'customer desc', directionLabel: 'Z-A' },
         { label: 'Date', value: 'date asc', directionLabel: 'A-Z' },
         { label: 'Date', value: 'date desc', directionLabel: 'Z-A' },
-        { label: 'Total', value: 'total asc', directionLabel: 'Ascending' },
-        { label: 'Total', value: 'total desc', directionLabel: 'Descending' },
     ];
     const [sortSelected, setSortSelected] = useState(['order asc']);
     const [queryValue, setQueryValue] = useState('');
     const [selected, setSelected] = useState(0);
+    const [selectedCommission, setSelectedCommission] = useState("0");
     const [itemStrings, setItemStrings] = useState([
         'All',
     ]);
@@ -99,19 +86,8 @@ const Calculator: NextPage = () => {
         [],
     );
     const handleFiltersClearAll = useCallback(() => {
-        // handleAccountStatusRemove();
-        // handleMoneySpentRemove();
-        // handleTaggedWithRemove();
-        // handleQueryValueRemove();
-    }, [
-        // handleAccountStatusRemove,
-        // handleMoneySpentRemove,
-        // handleQueryValueRemove,
-        // handleTaggedWithRemove,
-    ]);
+    }, []);
 
-    const sleep = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
     const tabs: TabProps[] = itemStrings.map((item, index) => ({
         content: item,
         index,
@@ -161,7 +137,7 @@ const Calculator: NextPage = () => {
     ];
 
     const breakpoint = useBreakpoints()
-    return <Layout title="Calculator">
+    return <Layout title="Orders">
         {(() => {
             if (isLoading) return <>Loading...</>
             if (error) return <>Something went wrong, contact support</>
@@ -169,19 +145,22 @@ const Calculator: NextPage = () => {
                 <IndexFilters
                     sortOptions={sortOptions}
                     sortSelected={sortSelected}
+                    onSort={setSortSelected}
+                    queryValue={queryValue}
                     onQueryChange={handleFiltersQueryChange}
                     onQueryClear={() => setQueryValue('')}
                     mode={mode}
                     setMode={setMode}
                     tabs={tabs}
                     selected={selected}
+                    onSelect={e => { setSelected }}
                     filters={filters}
                     onClearAll={handleFiltersClearAll}
                 />
                 <IndexTable
                     condensed={breakpoint.smDown}
                     resourceName={resourceName}
-                    itemCount={products.length}
+                    itemCount={orders.length}
                     selectedItemsCount={
                         allResourcesSelected ? 'All' : selectedResources.length
                     }
@@ -202,51 +181,4 @@ const Calculator: NextPage = () => {
 
 }
 
-
-
-const Commission = ({ commission, id, index }: { commission: number, id: string, index: number }) => {
-    const { trigger } = useSWRMutation(`${routes.api.products}/${id}`, patchRequest)
-    const [value, setValue] = useState(commission.toString())
-    const handleCommissionChange = (value: string, id: string) => {
-        console.log(id)
-        setValue(value)
-        trigger({ commission: value, })
-    }
-
-    // const toggleCommissionType = (i: number) => {
-    //     setProducts((prev: Product[]) => {
-    //         const products = [...prev]
-    //         products[i].commissionType = (products[i].commissionType + 1) % 2
-    //         return products
-    //     })
-    // }
-
-
-
-    return <>
-        <Typography sx={{ display: "flex", justifyContent: "center", alignItems: "center" }} >
-            {/* <span onClick={() => toggleCommissionType(index)}>
-                            {commissionType ?
-                                <Icon
-                                    source={ToggleOffIcon}
-                                    tone="base"
-                                />
-                                :
-                                <Icon
-                                    source={ToggleOnIcon}
-                                    tone="base"
-                                />
-                            }
-                        </span> */}
-            <TextField
-                label=""
-                value={value.toString()}
-                onChange={(e) => handleCommissionChange(e, id)}
-                autoComplete="off"
-            />
-        </Typography>
-
-    </>
-}
-
-export default Calculator;
+export default Order;

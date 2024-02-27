@@ -174,7 +174,7 @@ export default function Dashboard({ children }: DefaultProps): JSX.Element {
                 </Typography>
                 <Divider />
                 <List>
-                    {sideBar.slice(0, 3).map((item, i) => (
+                    {sideBar.slice(0, 4).map((item, i) => (
                         <ListItem key={i} disablePadding sx={{ display: 'block' }}>
                             <ListItemButton component={Link} href={item.link} selected={selected.includes(item.label.toLowerCase())}
                                 sx={{
