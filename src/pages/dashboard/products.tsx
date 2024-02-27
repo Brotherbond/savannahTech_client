@@ -44,11 +44,16 @@ export const sleep = (ms: number) =>
 
 const Product: NextPage = () => {
     const { data, error, isLoading } = useSWR(routes.api.products, fetcher)
-    const [products, setProducts] = useState<Product[]>([])
-    useEffect(() => {
-        (data as [])?.length && setProducts(data as [])
-    }, [data])
-
+    const [sortSelected, setSortSelected] = useState(['order asc']);
+    const [queryValue, setQueryValue] = useState('');
+    const [selected, setSelected] = useState(0);
+    const [selectedCommission, setSelectedCommission] = useState("0");
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [itemStrings, setItemStrings] = useState([
+        'All',
+    ]);
+    const { mode, setMode } = useSetIndexFiltersMode();
+    const { trigger } = useSWRMutation(`${routes.api.products}/many`, patchRequest)
     const resourceName = {
         singular: 'product',
         plural: 'products',
@@ -59,35 +64,9 @@ const Product: NextPage = () => {
     };
 
     const { selectedResources, allResourcesSelected, clearSelection, handleSelectionChange } =
-        useIndexResourceState(products as any, {
+        useIndexResourceState(filteredProducts as any, {
             resourceIDResolver,
         });
-
-    const rowMarkup = useMemo(() => [...products].slice(0, 10).map(
-        (
-            { _id: id, image, name, currency, category, commission, price },
-            index,
-        ) => (
-            <IndexTable.Row
-                id={id}
-                key={id}
-                selected={selectedResources.includes(id)}
-                position={index}
-            >
-                <IndexTable.Cell>
-                    <Image src={image} alt="image" width={24} height={24} />
-                    {name}
-                </IndexTable.Cell>
-                <IndexTable.Cell>{category}</IndexTable.Cell>
-                <IndexTable.Cell>{currency}{price}</IndexTable.Cell>
-                <IndexTable.Cell>
-                    <Commission {...{ commission, id, index }} />
-                </IndexTable.Cell>
-            </IndexTable.Row>
-        ),
-    ), [products, selectedResources]
-    )
-
     const sortOptions: IndexFiltersProps['sortOptions'] = [
         { label: 'Order', value: 'order asc', directionLabel: 'Ascending' },
         { label: 'Order', value: 'order desc', directionLabel: 'Descending' },
@@ -98,31 +77,6 @@ const Product: NextPage = () => {
         { label: 'Date', value: 'date asc', directionLabel: 'A-Z' },
         { label: 'Date', value: 'date desc', directionLabel: 'Z-A' },
     ];
-    const [sortSelected, setSortSelected] = useState(['order asc']);
-    const [queryValue, setQueryValue] = useState('');
-    const [selected, setSelected] = useState(0);
-    const [selectedCommission, setSelectedCommission] = useState("0");
-    const [itemStrings, setItemStrings] = useState([
-        'All',
-    ]);
-    const { mode, setMode } = useSetIndexFiltersMode();
-
-    const handleFiltersQueryChange = useCallback(
-        (value: string) => setQueryValue(value),
-        [],
-    );
-    const handleFiltersClearAll = useCallback(() => {
-        // handleAccountStatusRemove();
-        // handleMoneySpentRemove();
-        // handleTaggedWithRemove();
-        // handleQueryValueRemove();
-    }, [
-        // handleAccountStatusRemove,
-        // handleMoneySpentRemove,
-        // handleQueryValueRemove,
-        // handleTaggedWithRemove,
-    ]);
-
     const tabs: TabProps[] = itemStrings.map((item, index) => ({
         content: item,
         index,
@@ -171,7 +125,45 @@ const Product: NextPage = () => {
         },
     ];
 
-    const { trigger } = useSWRMutation(`${routes.api.products}/many`, patchRequest)
+
+    const handleFiltersQueryChange = useCallback(
+        (value: string) => setQueryValue(value),
+        [],
+    );
+    const handleFiltersClearAll = useCallback(() => { }, []);
+    const rowMarkup = useMemo(() => filteredProducts?.slice(0, 10).map(
+        (
+            { _id: id, image, name, currency, category, commission, price },
+            index,
+        ) => (
+            <IndexTable.Row
+                id={id}
+                key={id}
+                selected={selectedResources.includes(id)}
+                position={index}
+            >
+                <IndexTable.Cell>
+                    <Image src={image} alt="image" width={24} height={24} />
+                    {name}
+                </IndexTable.Cell>
+                <IndexTable.Cell>{category}</IndexTable.Cell>
+                <IndexTable.Cell>{currency}{price}</IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Commission {...{ commission, id, index }} />
+                </IndexTable.Cell>
+            </IndexTable.Row>
+        ),
+    ), [filteredProducts, selectedResources]
+    )
+    useEffect(() => {
+        const filteredProducts = (data as Product[])?.filter(product => {
+            const nameMatch = product.name.toLowerCase().includes(queryValue.toLowerCase());
+            const priceMatch = queryValue === '' || product.price.toString().includes(queryValue);
+            return nameMatch || priceMatch;
+        });
+        setFilteredProducts(filteredProducts || [])
+    }, [queryValue, data])
+
     const handleMultipleUpdate = () => trigger({ selectedResources, commission: parseFloat(selectedCommission) }).then(() => {
         clearSelection()
         mutate(routes.api.products);
@@ -202,7 +194,7 @@ const Product: NextPage = () => {
                 <IndexTable
                     condensed={breakpoint.smDown}
                     resourceName={resourceName}
-                    itemCount={products.length}
+                    itemCount={filteredProducts?.length}
                     selectedItemsCount={
                         allResourcesSelected ? 'All' : selectedResources.length
                     }
