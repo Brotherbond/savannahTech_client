@@ -65,8 +65,8 @@ const Order: NextPage = () => {
     const sortOptions: IndexFiltersProps['sortOptions'] = [
         { label: 'Order', value: 'order asc', directionLabel: 'Ascending' },
         { label: 'Order', value: 'order desc', directionLabel: 'Descending' },
-        { label: 'Price', value: 'order asc', directionLabel: 'Ascending' },
-        { label: 'Price', value: 'order desc', directionLabel: 'Descending' },
+        { label: 'Price', value: 'price asc', directionLabel: 'Ascending' },
+        { label: 'Price', value: 'price desc', directionLabel: 'Descending' },
         { label: 'Customer', value: 'customer asc', directionLabel: 'A-Z' },
         { label: 'Customer', value: 'customer desc', directionLabel: 'Z-A' },
         { label: 'Date', value: 'date asc', directionLabel: 'A-Z' },
@@ -75,7 +75,6 @@ const Order: NextPage = () => {
     const [sortSelected, setSortSelected] = useState(['order asc']);
     const [queryValue, setQueryValue] = useState('');
     const [selected, setSelected] = useState(0);
-    const [selectedCommission, setSelectedCommission] = useState("0");
     const [itemStrings, setItemStrings] = useState([
         'All',
     ]);

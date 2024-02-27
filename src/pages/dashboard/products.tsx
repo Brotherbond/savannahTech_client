@@ -91,8 +91,8 @@ const Product: NextPage = () => {
     const sortOptions: IndexFiltersProps['sortOptions'] = [
         { label: 'Order', value: 'order asc', directionLabel: 'Ascending' },
         { label: 'Order', value: 'order desc', directionLabel: 'Descending' },
-        { label: 'Price', value: 'order asc', directionLabel: 'Ascending' },
-        { label: 'Price', value: 'order desc', directionLabel: 'Descending' },
+        { label: 'Price', value: 'price asc', directionLabel: 'Ascending' },
+        { label: 'Price', value: 'price desc', directionLabel: 'Descending' },
         { label: 'Customer', value: 'customer asc', directionLabel: 'A-Z' },
         { label: 'Customer', value: 'customer desc', directionLabel: 'Z-A' },
         { label: 'Date', value: 'date asc', directionLabel: 'A-Z' },
